@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ssb_runner/common/constants.dart';
 import 'package:ssb_runner/common/upper_case_formatter.dart';
-import 'package:ssb_runner/contest_run/contests.dart';
+import 'package:ssb_runner/contest_type/contest_definition.dart';
 import 'package:ssb_runner/contest_run/new/contest_manager.dart';
 import 'package:ssb_runner/settings/app_settings.dart';
 import 'package:ssb_runner/ui/bottom_panel/qso_operation_area.dart';
@@ -33,16 +33,18 @@ class MainSettings extends StatelessWidget {
         create: (context) => MainSettingsCubit(contestManager: context.read()),
         child: BlocBuilder<MainSettingsCubit, bool>(
           builder: (context, isContestRunning) {
-            return ExcludeFocus(
-              excluding: isContestRunning,
-              child: Flex(
-                direction: Axis.vertical,
-                spacing: 12.0,
-                children: [
-                  SettingItem(title: 'Contest', content: _ContestSettings()),
-                  SettingItem(title: 'Station', content: _StationSettings()),
-                  SettingItem(title: 'Options', content: OptionsSetting()),
-                ],
+            return SingleChildScrollView(
+              child: ExcludeFocus(
+                excluding: isContestRunning,
+                child: Flex(
+                  direction: Axis.vertical,
+                  spacing: 12.0,
+                  children: [
+                    SettingItem(title: 'Contest', content: _ContestSettings()),
+                    SettingItem(title: 'Station', content: _StationSettings()),
+                    SettingItem(title: 'Options', content: OptionsSetting()),
+                  ],
+                ),
               ),
             );
           },
@@ -52,21 +54,15 @@ class MainSettings extends StatelessWidget {
   }
 }
 
-class ContestSettingCubit extends Cubit<Contest> {
+class ContestSettingCubit extends Cubit<ContestDefinition> {
   final AppSettings _appSettings;
 
   ContestSettingCubit({required AppSettings appSettings})
     : _appSettings = appSettings,
-      super(
-        supportedContests.firstWhere(
-          (element) => element.id == appSettings.contestId,
-        ),
-      );
+      super(ContestRegistry.byId(appSettings.contestId));
 
   void changeContest(String contestId) {
-    final contest = supportedContests.firstWhere(
-      (element) => element.id == contestId,
-    );
+    final contest = ContestRegistry.byId(contestId);
     _appSettings.contestId = contestId;
 
     emit(contest);
@@ -91,14 +87,14 @@ class _ContestSettingsState extends State<_ContestSettings> {
         final cubit = ContestSettingCubit(appSettings: context.read());
 
         _contestNameController.text = cubit.state.name;
-        _contestExchangeController.text = cubit.state.exchange;
+        _contestExchangeController.text = cubit.state.exchangeLabel;
 
         return cubit;
       },
-      child: BlocListener<ContestSettingCubit, Contest>(
+      child: BlocListener<ContestSettingCubit, ContestDefinition>(
         listener: (context, contest) {
           _contestNameController.text = contest.name;
-          _contestExchangeController.text = contest.exchange;
+          _contestExchangeController.text = contest.exchangeLabel;
         },
         child: BlocBuilder<MainSettingsCubit, bool>(
           builder: (context, isContestRunning) {
@@ -110,14 +106,25 @@ class _ContestSettingsState extends State<_ContestSettings> {
               children: [
                 Expanded(
                   flex: 2,
-                  child: TextField(
+                  child: DropdownMenu<String>(
                     enabled: isEnabled,
-                    readOnly: true,
                     controller: _contestNameController,
-                    decoration: InputDecoration(
+                    onSelected: (id) {
+                      if (id != null) {
+                        context.read<ContestSettingCubit>().changeContest(id);
+                      }
+                    },
+                    dropdownMenuEntries: ContestRegistry.all
+                        .map(
+                          (contest) => DropdownMenuEntry(
+                            value: contest.id,
+                            label: contest.name,
+                          ),
+                        )
+                        .toList(),
+                    label: const Text('Name'),
+                    inputDecorationTheme: const InputDecorationTheme(
                       border: OutlineInputBorder(),
-                      labelText: 'Name',
-                      suffixIcon: Icon(Icons.arrow_drop_down),
                     ),
                   ),
                 ),

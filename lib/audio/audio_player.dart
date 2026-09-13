@@ -3,12 +3,18 @@ import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:ssb_runner/main.dart';
+import 'package:ssb_runner/training/training_profile.dart';
 
 class AudioPlayer {
   AudioSource? _audioSource;
   SoundHandle? _handle;
 
   final _isMyAudioMap = <int, bool>{};
+  AudioTrainingProfile? _trainingProfile;
+
+  void setTrainingProfile(AudioTrainingProfile profile) {
+    _trainingProfile = profile;
+  }
 
   bool get isStarted {
     return _handle != null;
@@ -44,6 +50,7 @@ class AudioPlayer {
 
     _audioSource = null;
     _handle = null;
+    _trainingProfile = null;
   }
 
   bool isPlaying() {
@@ -116,7 +123,11 @@ class AudioPlayer {
       audioSource,
     );
 
-    SoLoud.instance.addAudioDataStream(audioSource, pcmData);
+    final profile = _trainingProfile;
+    final output = !isMyAudio && profile != null
+        ? AudioTrainingEffects.apply(pcmData, profile)
+        : pcmData;
+    SoLoud.instance.addAudioDataStream(audioSource, output);
 
     final currentBufferSize = SoLoud.instance.getBufferSize(audioSource);
     final currentBufferedDuration = _calcualtePcmDataLength(currentBufferSize);

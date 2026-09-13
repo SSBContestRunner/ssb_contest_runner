@@ -67,7 +67,10 @@ class _QsoResultListState extends State<QsoRecordList> {
                           child: Row(
                             children: [
                               _textOfQso(
-                                  colorScheme, qsoItemTextStyle, item.call),
+                                colorScheme,
+                                qsoItemTextStyle,
+                                item.call,
+                              ),
                             ],
                           ),
                         ),
@@ -89,7 +92,10 @@ class _QsoResultListState extends State<QsoRecordList> {
                           child: Row(
                             children: [
                               _textOfQso(
-                                  colorScheme, qsoItemTextStyle, item.exchange),
+                                colorScheme,
+                                qsoItemTextStyle,
+                                item.exchange,
+                              ),
                             ],
                           ),
                         ),
@@ -119,9 +125,12 @@ class _QsoResultListState extends State<QsoRecordList> {
     TextStyle? textStyle,
     QsoResultField qsoField,
   ) {
-    return Text(
-      qsoField.data,
-      style: _obtainBodyTextStyle(colorScheme, textStyle, qsoField.isCorrect),
+    return Semantics(
+      label: qsoField.isCorrect ? qsoField.data : '${qsoField.data}, incorrect',
+      child: Text(
+        qsoField.data,
+        style: _obtainBodyTextStyle(colorScheme, textStyle, qsoField.isCorrect),
+      ),
     );
   }
 
