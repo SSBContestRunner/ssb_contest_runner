@@ -117,9 +117,10 @@ class _MainAppCubit extends Cubit<_AppDeps?> {
     final windowOptions = WindowOptions(size: Size(1280, 720), center: true);
 
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.setMinimumSize(Size(1024, 650));
       await windowManager.show();
       await windowManager.focus();
-      await windowManager.setResizable(false);
+      await windowManager.setResizable(true);
     });
 
     final prefs = await SharedPreferencesWithCache.create(

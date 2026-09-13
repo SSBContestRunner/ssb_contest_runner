@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:ssb_runner/audio/audio_loader.dart';
+import 'package:ssb_runner/audio/mix_pcm.dart';
 import 'package:ssb_runner/audio/audio_player.dart';
 import 'package:ssb_runner/audio/payload_to_audio.dart';
 import 'package:ssb_runner/common/calculate_list_diff.dart';
@@ -253,6 +254,41 @@ class ContestStateChangeHandler {
           isMyAudio: playType.isMe,
         );
         break;
+      case PlayPileup():
+        final clips = await Future.wait(
+          playType.calls.map(
+            (callsign) => _audioLoader.loadAudio(
+              obtainAssetDir(false, dxccId),
+              CallsignPayload(
+                callsign: callsign,
+                phonicType: _appSettings.phonicType,
+              ),
+            ),
+          ),
+        );
+        _audioPlayer.addAudioData(
+          mixPcm16(clips),
+          isResetCurrentStream: isResetAudioStream,
+        );
+        break;
+      case PlaySearchAndPounce():
+        final assetDir = obtainAssetDir(false, dxccId);
+        final cq = await _audioLoader.loadAudio(
+          myAudioAccentDir,
+          CommonPayload(fileName: 'CQ.wav'),
+        );
+        final call = await _audioLoader.loadAudio(
+          assetDir,
+          CallsignPayload(
+            callsign: playType.call,
+            phonicType: _appSettings.phonicType,
+          ),
+        );
+        _audioPlayer.addAudioData(
+          await concatUint8List([cq, call]),
+          isResetCurrentStream: isResetAudioStream,
+        );
+        break;
     }
   }
 
@@ -345,6 +381,8 @@ class ContestStateChangeHandler {
       NextCall(
         callAnswer: contestAnswer.callSign,
         exchangeAnswer: contestAnswer.exchange,
+        pileupCallsigns: contestAnswer.pileupCallsigns,
+        isSearchAndPounce: contestAnswer.isSearchAndPounce,
       ),
     );
   }

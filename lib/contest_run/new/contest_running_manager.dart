@@ -13,6 +13,7 @@ import 'package:ssb_runner/contest_run/state_machine/single_call/single_call_run
 import 'package:ssb_runner/contest_type/contest_type.dart';
 import 'package:ssb_runner/contest_type/score_calculator.dart';
 import 'package:ssb_runner/state_machine/state_machine.dart';
+import 'package:ssb_runner/training/training_profile.dart';
 
 class ContestRunningManager {
   final String runId;
@@ -20,6 +21,9 @@ class ContestRunningManager {
   final ContestDataManager _contestDataManager;
   final ContestTimer _contestTimer;
   final ScoreCalculator _scoreCalculator;
+  final TrainingMode _mode;
+  final TrainingDifficulty _difficulty;
+  final int _seed;
 
   late final ContestInputHandler _inputHandler =
       _contestDataManager.inputHandler;
@@ -36,6 +40,9 @@ class ContestRunningManager {
   late final ContestAnswerGenerator _answerGenerator = ContestAnswerGenerator(
     contestType: _contestType,
     callsignLoader: _contestDataManager.callsignLoader,
+    mode: _mode,
+    difficulty: _difficulty,
+    seed: _seed,
   );
 
   late final ContestStateChangeHandler _contestStateChangeHandler =
@@ -57,7 +64,9 @@ class ContestRunningManager {
         inputHandler: _inputHandler,
       );
 
-  final _keyEventManager = KeyEventHandler();
+  late final _keyEventManager = KeyEventHandler(
+    functionKeys: functionKeysFromSettings(_contestDataManager.appSettings),
+  );
 
   late final KeyEventCallback _keyEventCallback = _onKeyEvent;
 
@@ -72,10 +81,16 @@ class ContestRunningManager {
     required ContestType contestType,
     required ContestDataManager contestDataManager,
     required ScoreCalculator scoreCalculator,
+    required TrainingMode mode,
+    required TrainingDifficulty difficulty,
+    required int seed,
   }) : _contestType = contestType,
        _contestTimer = contestTimer,
        _contestDataManager = contestDataManager,
-       _scoreCalculator = scoreCalculator {
+       _scoreCalculator = scoreCalculator,
+       _mode = mode,
+       _difficulty = difficulty,
+       _seed = seed {
     _setupStateMachine();
     _setupKeyboardListener();
   }
@@ -86,6 +101,8 @@ class ContestRunningManager {
     final waitingSubmitCall = WaitingSubmitCall(
       currentCallAnswer: contestAnswer.callSign,
       currentExchangeAnswer: contestAnswer.exchange,
+      pileupCallsigns: contestAnswer.pileupCallsigns,
+      isSearchAndPounce: contestAnswer.isSearchAndPounce,
     );
 
     _stateMachine = initSingleCallRunStateMachine(

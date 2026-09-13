@@ -6,6 +6,19 @@ SSB Contest Listening and Training Software
 
 inspired by [MorseRunner](https://github.com/w7sst/MorseRunner)
 
+## Training capabilities
+
+- Rule registry with CQ WPX SSB, CQ WW SSB, ARRL DX SSB, IARU HF SSB, and
+  JIDX SSB practice templates.
+- Run, Search & Pounce, and overlapping-caller Pile-up exercises.
+- Beginner, Standard, and Advanced audio profiles (speed, noise, and fading).
+- Post-session accuracy, rate, score, error categories, and replay seed.
+- Configurable F1–F8 commands and incoming-station audio volume.
+
+The additional templates are explicitly **single-band training profiles**.
+They are not Cabrillo-log certification: official multi-band scoring also needs
+the event's category, band, date, and current rule revision.
+
 ## Downloads
 
 Please visit our [website](https://ssbrunner.com/) 
